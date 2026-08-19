@@ -1,84 +1,119 @@
 # My_Philosophers
 
-Implementação do problema clássico dos filósofos jantando em C, desenvolvida como parte da formação da 42 Rio.
+Implementação do problema clássico dos **Filósofos Jantando** em C, desenvolvida durante a formação da 42 Rio.
 
-O projeto trabalha concorrência, threads, mutexes, sincronização e controle de tempo. A proposta é simular filósofos que alternam entre comer, dormir e pensar, evitando condições de corrida e monitorando corretamente o estado de cada participante.
+O projeto usa threads e mutexes para simular filósofos que alternam entre comer, dormir e pensar enquanto disputam recursos compartilhados. O desafio real é manter o estado consistente sob concorrência e respeitar os limites de tempo da simulação.
 
 ## Objetivo
 
-Resolver o problema dos filósofos jantando usando `pthread`, garantindo que os recursos compartilhados sejam protegidos e que a simulação respeite os tempos informados por argumento.
+Resolver o problema usando `pthread`, garantindo que:
 
-## Tecnologias e conceitos utilizados
+- os garfos sejam protegidos contra acesso concorrente incorreto;
+- a saída da simulação permaneça consistente;
+- o estado de morte/finalização seja observado corretamente;
+- a simulação respeite `time_to_die`, `time_to_eat` e `time_to_sleep`;
+- o argumento opcional de quantidade de refeições seja tratado;
+- recursos sejam liberados ao final.
 
-- C
-- Makefile
-- `pthread`
-- Mutexes
-- Concorrência
-- Sincronização entre threads
-- Controle de tempo com `gettimeofday`
-- Estruturas encadeadas
-- Gerenciamento manual de memória
-
-## Funcionamento geral
-
-O programa recebe os parâmetros da simulação pela linha de comando:
+## Execução
 
 ```text
 ./philo number_of_philosophers time_to_die time_to_eat time_to_sleep [number_of_times_each_philosopher_must_eat]
 ```
 
-Cada filósofo é executado em uma thread. Os garfos são protegidos por mutexes, e uma rotina de monitoramento acompanha se algum filósofo morreu ou se todos atingiram a quantidade mínima de refeições, quando esse argumento opcional é informado.
+Exemplo:
 
-O código também trata o caso específico de apenas um filósofo.
-
-## Como compilar e executar
-
-```sh
-git clone https://github.com/vinionix/My_Philosophers.git
-cd My_Philosophers
-make
+```bash
 ./philo 5 800 200 200
 ```
 
-Exemplo com limite de refeições:
+Com meta de refeições:
 
-```sh
+```bash
 ./philo 5 800 200 200 7
 ```
 
-Alvos disponíveis:
+## Modelo de concorrência
 
-```sh
+```text
+Philosopher thread 1 ─┐
+Philosopher thread 2 ─┼──> shared forks protected by mutexes
+Philosopher thread N ─┘
+          │
+          └────────────> monitor / stop condition
+```
+
+Cada filósofo executa uma rotina própria. Os garfos são recursos compartilhados, e uma rotina de monitoramento acompanha as condições de término.
+
+## Tecnologias e conceitos
+
+- C
+- Makefile
+- `pthread`
+- mutexes
+- concorrência
+- sincronização
+- `gettimeofday`
+- shared state
+- estruturas encadeadas
+- gerenciamento manual de memória
+
+## Onde estão os bugs mais perigosos
+
+Projetos concorrentes podem parecer corretos durante dezenas de execuções e falhar apenas em uma condição de timing específica. Os pontos mais sensíveis são:
+
+- duas threads acessando estado sem sincronização;
+- ordem de aquisição de garfos;
+- saída concorrente no terminal;
+- thread de monitor lendo estado enquanto outra thread o modifica;
+- diferença entre tempo real e o momento em que a thread volta a executar;
+- cleanup de mutex/thread durante finalização.
+
+## Casos de teste úteis
+
+- um único filósofo;
+- dois filósofos;
+- muitos filósofos;
+- tempos extremamente apertados;
+- cenário em que uma morte é esperada;
+- cenário em que todos devem completar a meta de refeições;
+- várias execuções consecutivas com os mesmos argumentos;
+- análise com ferramentas de detecção de data race quando disponíveis.
+
+## Como compilar
+
+```bash
+git clone https://github.com/vinionix/My_Philosophers.git
+cd My_Philosophers
+make
+```
+
+Alvos:
+
+```bash
 make
 make clean
 make fclean
 make re
 ```
 
-## Status atual
+## Status
 
-Projeto em C com estrutura principal implementada, incluindo criação de threads, rotina dos filósofos, monitoramento e tratamento para um único filósofo.
+A estrutura principal está implementada, incluindo criação de threads, rotina dos filósofos, monitoramento e tratamento do caso de um único filósofo. O repositório não afirma resultado oficial de avaliação nem suíte automatizada completa.
 
-O repositório não informa testes automatizados ou resultado de avaliação. A documentação foi escrita com base nos arquivos disponíveis no projeto.
+## O que este projeto demonstra
 
-## Evolução do projeto
+- criação e sincronização de threads;
+- mutexes e proteção de recursos compartilhados;
+- raciocínio sobre race conditions;
+- controle de tempo em sistemas concorrentes;
+- lifecycle e cleanup de recursos de sincronização;
+- debugging de comportamento não determinístico.
 
-- Estruturação dos argumentos e da tabela de filósofos/garfos.
-- Implementação da criação de threads para os filósofos.
-- Proteção de recursos compartilhados com mutexes.
-- Implementação do monitoramento da simulação.
-- Tratamento do caso de apenas um filósofo.
-- Fase atual: projeto documentado para consulta e portfólio.
+## Documentação
 
-## Aprendizados principais
-
-- Criação e sincronização de threads em C.
-- Uso de mutexes para proteger recursos compartilhados.
-- Prevenção de condições de corrida.
-- Controle de tempo em simulações concorrentes.
-- Organização de uma solução para um problema clássico de sistemas operacionais.
+- [Technical Overview](docs/TECHNICAL_OVERVIEW.md) — modelo de concorrência, pontos críticos e estratégia de stress test.
 
 ## Autor
 
-Desenvolvido por [vinionix](https://github.com/vinionix) durante a formação na 42 Rio.
+Desenvolvido por [Vinícius Fidelis](https://github.com/vinionix) durante a formação na 42 Rio.
